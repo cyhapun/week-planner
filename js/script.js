@@ -1,5 +1,5 @@
 // Định nghĩa số lượng tối đa công việc mỗi ngày (5 công việc/ngày)
-const maxTasksPerDay = 5;
+const maxTasksPerDay = 6;
 
 // Khởi tạo đối tượng data để lưu trữ dữ liệu công việc theo tuần
 let data = {};
@@ -9,7 +9,10 @@ let currentWeek = "";
 
 // Hàm định dạng ngày thành chuỗi theo chuẩn ISO (YYYY-MM-DD)
 function formatDate(date) {
-  return date.toISOString().split("T")[0]; // Lấy phần ngày từ chuỗi ISO
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // +1 vì getMonth() bắt đầu từ 0
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`; // Định dạng YYYY-MM-DD theo múi giờ địa phương
 }
 
 // Hàm lấy ngày thứ Hai của tuần chứa ngày được truyền vào
@@ -39,10 +42,11 @@ function renderWeekSelector() {
   // Lấy ngày hiện tại và tìm thứ Hai của tuần hiện tại
   const today = new Date();
   const currentMonday = getMonday(today);
+  const numberWeeks = 3; // Số tuần cần hiển thị
+  // Tạo danh sách numberWeeks tuần từ tuần hiện tại
+  const weeksList = []; 
 
-  // Tạo danh sách 3 tuần từ tuần hiện tại
-  const weeksList = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < numberWeeks; i++) {
     const weekDate = new Date(currentMonday); // Tạo bản sao ngày thứ Hai
     weekDate.setDate(weekDate.getDate() + (i * 7)); // Tăng 7 ngày để lấy tuần tiếp theo
     const weekStr = formatDate(weekDate); // Định dạng ngày
