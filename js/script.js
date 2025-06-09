@@ -7,6 +7,20 @@ let data = {};
 // Biến lưu tuần hiện tại đang được chọn
 let currentWeek = "";
 
+function cleanOldWeek() {
+  const weeks = Object.keys(data); // Lấy danh sách các tuần trong data
+  const today = new Date();
+  const currentMonday = getMonday(today);
+  if (weeks.length <= 1) return; // Không xóa nếu chỉ còn 1 tuần hoặc không có tuần nào
+
+  for (let week of weeks) {
+    if (new Date(week) < new Date(currentMonday)) { // So sánh tuần với thứ Hai của tuần hiện tại
+      // Xóa tuần cũ khỏi data
+      delete data[week];
+    }
+  }
+}
+
 // Hàm định dạng ngày thành chuỗi theo chuẩn ISO (YYYY-MM-DD)
 function formatDate(date) {
   const year = date.getFullYear();
@@ -45,7 +59,8 @@ function renderWeekSelector() {
   const numberWeeks = 3; // Số tuần cần hiển thị
   // Tạo danh sách numberWeeks tuần từ tuần hiện tại
   const weeksList = []; 
-
+  // Xóa tuần cũ nếu qua tuần mới (so sánh với tuần hiện tại)
+  cleanOldWeek();
   for (let i = 0; i < numberWeeks; i++) {
     const weekDate = new Date(currentMonday); // Tạo bản sao ngày thứ Hai
     weekDate.setDate(weekDate.getDate() + (i * 7)); // Tăng 7 ngày để lấy tuần tiếp theo
@@ -55,6 +70,10 @@ function renderWeekSelector() {
     // Khởi tạo dữ liệu tuần mới nếu chưa tồn tại
     if (!data[weekStr]) {
       data[weekStr] = Array.from({ length: maxTasksPerDay }, () => Array(7).fill(null)); // Tạo mảng 5x7 với giá trị null
+    }
+    if (data[weekStr].length < maxTasksPerDay) {
+      // Nếu mảng không đủ 5 công việc, khởi tạo lại
+      data[weekStr].push(Array(7).fill(null));
     }
   }
 
