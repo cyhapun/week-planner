@@ -18,6 +18,15 @@ export function addTouchListeners() {
 
 // Xử lý khi bắt đầu chạm vào một công việc
 function handleTouchStart(e) {
+  const target = e.target;
+
+  // Nếu người dùng chạm vào một nút trong khu vực .actions
+  // thì không thực hiện kéo thả, để cho sự kiện 'onclick' của nút hoạt động.
+  if (target.tagName === 'BUTTON' || target.closest('.actions')) {
+    return;
+  }
+
+  // Nếu không phải là nút, mới bắt đầu quá trình kéo thả
   // Ngăn hành vi mặc định (như cuộn trang) khi bắt đầu kéo
   e.preventDefault();
   
