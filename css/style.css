@@ -195,3 +195,15 @@ h1 {
     min-height: 50px;
   }
 }
+
+/* Drag and drop on moblie */
+.task.dragging {
+  opacity: 0.5;
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.drop-hover {
+  background-color: #e0f7ff !important;
+  border: 2px dashed #3498db;
+}

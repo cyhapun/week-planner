@@ -1,11 +1,13 @@
+import { addTouchListeners } from './drag-drop-moblie.js';
+
 // Định nghĩa số lượng tối đa công việc mỗi ngày (5 công việc/ngày)
 const maxTasksPerDay = 6;
 
 // Khởi tạo đối tượng data để lưu trữ dữ liệu công việc theo tuần
-let data = {};
+export let data = {};
 
 // Biến lưu tuần hiện tại đang được chọn
-let currentWeek = "";
+export let currentWeek = "";
 
 function cleanOldWeek() {
   const weeks = Object.keys(data); // Lấy danh sách các tuần trong data
@@ -93,7 +95,7 @@ function renderWeekSelector() {
 }
 
 // Hàm hiển thị bảng thời gian công việc
-function render() {
+export function render() {
   const container = document.getElementById("timetable"); // Lấy phần tử container
   container.innerHTML = ""; // Xóa nội dung cũ
   const start = currentWeek; // Lấy tuần hiện tại
@@ -118,7 +120,10 @@ function render() {
     row.forEach((cell, j) => {
       if (cell) { // Nếu ô có công việc
         container.innerHTML += `
-        <div class="task ${cell.done ? 'completed' : ''}" draggable="true"
+        <div class="task ${cell.done ? 'completed' : ''}" 
+          data-row="${i}" 
+          data-col="${j}" 
+          draggable="true" 
           ondragstart="drag(event, ${i}, ${j})" ondrop="drop(event, ${i}, ${j})" ondragover="allowDrop(event)">
           <span ondblclick="editTask(${i}, ${j})">${cell.text}</span>
           <div class="actions">
@@ -127,10 +132,12 @@ function render() {
           </div>
         </div>`;
       } else { // Nếu ô trống
-        container.innerHTML += `<div class="empty" ondrop="drop(event, ${i}, ${j})" ondragover="allowDrop(event)"></div>`;
+        container.innerHTML += `<div class="empty" ondrop="drop(event, ${i}, ${j})" data-row="${i}" data-col="${j}" ondragover="allowDrop(event)"></div>`;
       }
     });
   });
+  // Gắn các sự kiện cảm ứng cho mobile
+  addTouchListeners();
 }
 
 // Hàm thêm công việc mới
@@ -284,3 +291,18 @@ function addNextWeek() {
     alert("Tuần kế tiếp đã tồn tại!"); // Thông báo nếu tuần đã tồn tại
   }
 }
+
+window.confirmModal = confirmModal;
+window.toggleDone = toggleDone;
+window.confirmDelete = confirmDelete;
+window.editTask = editTask;
+window.drag = drag;
+window.drop = drop;
+window.allowDrop = allowDrop;
+window.addTask = addTask;
+window.addNextWeek = addNextWeek;
+window.showModal = showModal; 
+
+
+
+
