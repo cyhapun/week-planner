@@ -1,18 +1,19 @@
 import { data, currentWeek, render } from './script.js';
+// --- BẮT ĐẦU: MÃ KÉO THẢ CHO DI ĐỘNG ---
 
-// --- BẮT ĐẦU: MÃ KÉO THẢ CHO THIẾT BỊ DI ĐỘNG ---
-
-let draggedElement = null; // Phần tử đang được kéo
+let pressTimer = null;      // Biến để lưu bộ đếm thời gian cho việc nhấn giữ
+let draggedElement = null;    // Phần tử đang được kéo
 let dropTargetElement = null; // Phần tử đích để thả
-let dragSrc = null; // Vị trí nguồn của phần tử đang kéo
+let dragSrc = null;
 
 // Hàm gắn các sự kiện cảm ứng vào các ô công việc
 export function addTouchListeners() {
   const tasks = document.querySelectorAll('.task');
   tasks.forEach(task => {
-    task.addEventListener('touchstart', handleTouchStart, { passive: false });
+    task.addEventListener('touchstart', handleTouchStart, { passive: true }); // passive: true để cuộn mượt hơn
     task.addEventListener('touchmove', handleTouchMove, { passive: false });
     task.addEventListener('touchend', handleTouchEnd);
+    task.addEventListener('touchcancel', handleTouchCancel);
   });
 }
 
@@ -20,51 +21,57 @@ export function addTouchListeners() {
 function handleTouchStart(e) {
   const target = e.target;
 
-  // Nếu người dùng chạm vào một nút trong khu vực .actions
-  // thì không thực hiện kéo thả, để cho sự kiện 'onclick' của nút hoạt động.
+  // Nếu người dùng chạm vào một nút, không làm gì cả
   if (target.tagName === 'BUTTON' || target.closest('.actions')) {
     return;
   }
-
-  // Nếu không phải là nút, mới bắt đầu quá trình kéo thả
-  // Ngăn hành vi mặc định (như cuộn trang) khi bắt đầu kéo
-  e.preventDefault();
   
-  draggedElement = e.target.closest('.task');
-  if (!draggedElement) return;
+  const taskElement = target.closest('.task');
+  if (!taskElement) return;
 
-  // Lấy vị trí dòng và cột từ thuộc tính data-*
-  const row = parseInt(draggedElement.dataset.row);
-  const col = parseInt(draggedElement.dataset.col);
+  // Bắt đầu một bộ đếm thời gian. Nếu giữ đủ lâu, nó sẽ kích hoạt chế độ kéo.
+  pressTimer = setTimeout(() => {
+    // Kích hoạt chế độ kéo
+    draggedElement = taskElement;
+    const row = parseInt(draggedElement.dataset.row);
+    const col = parseInt(draggedElement.dataset.col);
+    dragSrc = { row, col };
+    draggedElement.classList.add('dragging');
 
-  // Lưu lại vị trí nguồn, tương tự hàm drag()
-  dragSrc = { row, col };
-  
-  // Thêm class để tạo hiệu ứng đang kéo
-  draggedElement.classList.add('dragging');
+    // Rung nhẹ để báo hiệu cho người dùng (hoạt động trên các thiết bị hỗ trợ)
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
+    
+    pressTimer = null; // Xóa timer sau khi đã kích hoạt
+  }, 1000); // Giữ trong 1000ms (1 giây) để kéo. Bạn có thể thay đổi thời gian này.
 }
 
 // Xử lý khi di chuyển ngón tay trên màn hình
 function handleTouchMove(e) {
+  // Nếu người dùng di chuyển ngón tay, hủy bộ đếm thời gian (đây là hành vi cuộn, không phải nhấn giữ)
+  if (pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+
+  // Nếu chưa ở trong chế độ kéo, không làm gì cả
   if (!draggedElement) return;
-  // Ngăn cuộn trang
+  
+  // Ngăn cuộn trang khi đang kéo một mục
   e.preventDefault();
 
-  // Lấy tọa độ của điểm chạm
   const touch = e.touches[0];
-  // Tìm phần tử nằm dưới điểm chạm
   const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
   
   if (!elementUnderTouch) return;
 
   const newDropTarget = elementUnderTouch.closest('.task, .empty');
 
-  // Xóa hiệu ứng hover khỏi ô đích cũ
   if (dropTargetElement && dropTargetElement !== newDropTarget) {
     dropTargetElement.classList.remove('drop-hover');
   }
 
-  // Nếu tìm thấy ô đích mới, thêm hiệu ứng hover
   if (newDropTarget) {
     newDropTarget.classList.add('drop-hover');
     dropTargetElement = newDropTarget;
@@ -73,12 +80,27 @@ function handleTouchMove(e) {
 
 // Xử lý khi kết thúc chạm (nhấc ngón tay)
 function handleTouchEnd(e) {
+  // Nếu `pressTimer` vẫn còn, có nghĩa là người dùng đã nhấc ngón tay ra trước 1 giây.
+  // Đây là một cú "chạm" (tap).
+  if (pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+    
+    // Gọi hàm chỉnh sửa công việc
+    const taskElement = e.target.closest('.task');
+    if (taskElement) {
+        const row = parseInt(taskElement.dataset.row);
+        const col = parseInt(taskElement.dataset.col);
+        editTask(row, col); // Dùng lại hàm editTask đã có
+    }
+    return;
+  }
+
+  // Nếu không phải là một cú chạm, thì đây là lúc thả một mục đã được kéo.
   if (!draggedElement) return;
 
-  // Xóa class hiệu ứng khỏi phần tử đã kéo
   draggedElement.classList.remove('dragging');
 
-  // Nếu có ô đích và ô đích khác ô nguồn
   if (dropTargetElement) {
     dropTargetElement.classList.remove('drop-hover');
 
@@ -86,20 +108,34 @@ function handleTouchEnd(e) {
     const destCol = parseInt(dropTargetElement.dataset.col);
 
     if (dragSrc && (dragSrc.row !== destRow || dragSrc.col !== destCol)) {
-        // Hoán đổi dữ liệu (logic tương tự hàm drop())
         const temp = data[currentWeek][destRow][destCol];
         data[currentWeek][destRow][destCol] = data[currentWeek][dragSrc.row][dragSrc.col];
         data[currentWeek][dragSrc.row][dragSrc.col] = temp;
         
         localStorage.setItem("todoData", JSON.stringify(data));
-        render(); // Vẽ lại giao diện
+        render();
     }
   }
-
-  // Reset các biến
-  draggedElement = null;
-  dragSrc = null;
-  dropTargetElement = null;
+  
+  // Dọn dẹp
+  handleTouchCancel();
 }
 
-// --- KẾT THÚC: MÃ KÉO THẢ CHO THIẾT BỊ DI ĐỘNG ---
+// Hàm dọn dẹp khi cử chỉ bị hủy
+function handleTouchCancel() {
+    if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+    }
+    if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+    }
+    if (dropTargetElement) {
+        dropTargetElement.classList.remove('drop-hover');
+    }
+    draggedElement = null;
+    dragSrc = null;
+    dropTargetElement = null;
+}
+
+// --- KẾT THÚC: MÃ KÉO THẢ CHO DI ĐỘNG (PHIÊN BẢN NÂNG CẤP) ---
