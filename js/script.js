@@ -125,7 +125,7 @@ export function render() {
           data-col="${j}" 
           draggable="true" 
           ondragstart="drag(event, ${i}, ${j})" ondrop="drop(event, ${i}, ${j})" ondragover="allowDrop(event)">
-          <span ondblclick="editTask(${i}, ${j})">${cell.text}</span>
+          <span class="contentTask" ondblclick="editTask(${i}, ${j})">${cell.text}</span>
           <div class="actions">
             <button onclick="toggleDone(${i}, ${j})">✅</button>
             <button onclick="confirmDelete(${i}, ${j})">❌</button>
