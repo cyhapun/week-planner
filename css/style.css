@@ -196,6 +196,10 @@ h1 {
   }
 }
 
+#padding {
+  padding-bottom: 50px; /* Đảm bảo có đủ khoảng trống dưới cùng */
+}
+
 /* Drag and drop on moblie */
 .task.dragging {
   opacity: 0.5;

@@ -1,7 +1,7 @@
 import { addTouchListeners } from './drag-drop-moblie.js';
 
 // Định nghĩa số lượng tối đa công việc mỗi ngày (5 công việc/ngày)
-const maxTasksPerDay = 6;
+const maxTasksPerDay = 9;
 
 // Khởi tạo đối tượng data để lưu trữ dữ liệu công việc theo tuần
 export let data = {};
